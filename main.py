@@ -89,10 +89,19 @@ async def createTask(message, user):
         responses[user] = "anything"
         await message.reply("What is the name of this task? Make it concise and descriptive.")
     elif cycle == 1:
-        userdata = readUserData(user)
-        userdata["tasks"].append([responses[user]])
-        writeUserData(user, userdata)
-        await message.reply("What month is this task going to be due on?")
+        if responses[user].lower() == "cancel":
+            userdata = readUserData(user)
+            tasks = userdata["tasks"]
+            tasks.pop(len(tasks) - 1)
+            writeUserData(user, userdata)
+            responses.pop(user)
+                
+            await message.reply("Cancelling action.")
+        else:
+            userdata = readUserData(user)
+            userdata["tasks"].append([responses[user]])
+            writeUserData(user, userdata)
+            await message.reply("What month is this task going to be due on?")
     elif cycle == 2:
         monthTable = {
             "1": 1, "january": 1, 
@@ -108,66 +117,93 @@ async def createTask(message, user):
             "11": 11, "november": 11,
             "12": 12, "december": 12
         }
-        if responses[user].lower() in monthTable:
-            month = monthTable[responses[user].lower()]
+        if responses[user].lower() == "cancel":
             userdata = readUserData(user)
             tasks = userdata["tasks"]
-            tasks[len(tasks) - 1].append(month)
+            tasks.pop(len(tasks) - 1)
             writeUserData(user, userdata)
-            await message.reply("What day is this task going to be due on?")
+            responses.pop(user)
+                
+            await message.reply("Cancelling action.")
         else:
-            cycles[user] -= 1
-            await message.reply("Invalid month entered. Try again.")
+            if responses[user].lower() in monthTable:
+                month = monthTable[responses[user].lower()]
+                userdata = readUserData(user)
+                tasks = userdata["tasks"]
+                tasks[len(tasks) - 1].append(month)
+                writeUserData(user, userdata)
+                await message.reply("What day is this task going to be due on?")
+            else:
+                cycles[user] -= 1
+                await message.reply("Invalid month entered. Try again.")
     
     elif cycle == 3:
         try:
-            day = int(responses[user])
-            if day > 0 and day < 32:
+            if responses[user].lower() == "cancel":
                 userdata = readUserData(user)
                 tasks = userdata["tasks"]
-                tasks[len(tasks) - 1].append(day)
+                tasks.pop(len(tasks) - 1)
                 writeUserData(user, userdata)
-                await message.reply("What year is this task going to be due on?")
+                responses.pop(user)
+                
+                await message.reply("Cancelling action.")
             else:
-                cycles[user] -= 1
-                await message.reply("Invalid day entered. Try again.")
+                day = int(responses[user])
+                if day > 0 and day < 32:
+                    userdata = readUserData(user)
+                    tasks = userdata["tasks"]
+                    tasks[len(tasks) - 1].append(day)
+                    writeUserData(user, userdata)
+                    await message.reply("What year is this task going to be due on?")
+                else:
+                    cycles[user] -= 1
+                    await message.reply("Invalid day entered. Try again.")
         except:
             cycles[user] -= 1
             await message.reply("Invalid day entered. Try again.")
 
     elif cycle == 4:
         try:
-            year = int(responses[user])
-            date = currentDate()
-            if year >= date.year and year <= 3000:
+            if responses[user].lower() == "cancel":
                 userdata = readUserData(user)
                 tasks = userdata["tasks"]
-                task = tasks[len(tasks) - 1]
-
-                task.append(year)
-
-                #Figure out the type of task (Long, Medium or Short Term)
-                dateUnix = time.mktime(date.timetuple())
-                taskUnix = time.mktime(datetime.date(year, task[1], task[2]).timetuple())
-
-                days = taskUnix - dateUnix
-                days = days / 86400
-
-                if days <= 7:
-                    task.append("Short Term")
-                elif days <= 28:
-                    task.append("Medium Term")
-                else:
-                    task.append("Long Term")
-
-
-
+                tasks.pop(len(tasks) - 1)
                 writeUserData(user, userdata)
                 responses.pop(user)
-                await message.reply("Your task has been successfully entered.")
+                
+                await message.reply("Cancelling action.")
             else:
-                cycles[user] -= 1
-                await message.reply("Invalid year entered. Try again.")
+                year = int(responses[user])
+                date = currentDate()
+                if year >= date.year and year <= 3000:
+                    userdata = readUserData(user)
+                    tasks = userdata["tasks"]
+                    task = tasks[len(tasks) - 1]
+
+                    task.append(year)
+
+                    #Figure out the type of task (Long, Medium or Short Term)
+                    dateUnix = time.mktime(date.timetuple())
+                    taskUnix = time.mktime(datetime.date(year, task[1], task[2]).timetuple())
+
+                    days = taskUnix - dateUnix
+                    days = days / 86400
+
+                    if days <= 7:
+                        task.append("Short Term")
+                    elif days <= 28:
+                        task.append("Medium Term")
+                    else:
+                        task.append("Long Term")
+
+
+
+                    writeUserData(user, userdata)
+                    responses.pop(user)
+                    await message.reply("Your task has been successfully entered.")
+                else:
+                    cycles[user] -= 1
+                    await message.reply("Invalid year entered. Try again.")
         except:
             cycles[user] -= 1
             await message.reply("Invalid year entered. Try again.")
@@ -175,10 +211,8 @@ async def createTask(message, user):
 async def getTasks(message, user):
     userdata = readUserData(user)
     tasks = userdata["tasks"]
-    embed = discord.Embed()
     date = currentDate()
     dateUnix = time.mktime(date.timetuple())
-    embed.set_author(name = "Here is a list of all the tasks you need to do!", icon_url = client.user.avatar_url)
     task_table = {
         "Long Term": [[], [], []],
         "Medium Term": [[], [], []],
@@ -210,16 +244,27 @@ async def getTasks(message, user):
         mediumDisplay = format_tasks(medium_tasks)
         funnyDisplay = format_tasks(funny_tasks)
 
+        embed = None
+        if len(urgent_tasks) > 0:
+            embed = discord.Embed(colour = discord.Colour.red())
+            embed.set_author(name = "You have some urgent tasks to do! Finish them as soon as possible!", icon_url = client.user.avatar_url)
+        elif len(medium_tasks) > 0:
+            embed = discord.Embed(colour = discord.Colour.orange())
+            embed.set_author(name = "Seems like you have some tasks to do. Consider finishing them today!", icon_url = client.user.avatar_url)
+        else:
+            embed = discord.Embed(colour = discord.Colour.green())
+            embed.set_author(name = "Here is a list of tasks to do!", icon_url = client.user.avatar_url)
+
 
 
         embed.add_field(name = "Urgent Tasks:", value = f"```{urgentDisplay}```", inline = False)
         embed.add_field(name = "Medium Tasks:", value = f"```{mediumDisplay}```", inline = False)
         embed.add_field(name = "Other Tasks:", value = f"```{funnyDisplay}```", inline = False)
+        await message.reply(embed = embed)
     else:
-        embed.add_field(name = "You do not currently have any tasks due!", value = "If there are any tasks to do, feel free to add it using 'taskbot create'!", inline = True)
-
-    await message.reply(embed = embed)
-
+        embed = discord.Embed(colour = discord.Color.blue())
+        embed.set_author(name = "You do not currently have any tasks due currently! Feel free to create additional tasks with 'taskbot create'!", icon_url = client.user.avatar_url)
+        await message.reply(embed = embed)
 
 async def markTask(message, user):
     cycle = cycles[user]
@@ -246,11 +291,25 @@ async def markTask(message, user):
             cycles[user] -= 1
             await message.reply("Unfortunately, the ID of the task you were looking for wasn't found. Please try entering a different ID.")
 
+#Give the user some useful tips on how to use the bot
+async def helpCommand(message, user):
+    embed = discord.Embed(colour = discord.Colour.blue())
+    embed.set_author(name = "Here are a list of some commands and what they do!", icon_url = client.user.avatar_url)
+    embed.add_field(name = "taskbot create", value = "```Asks for a task name and asks for when the task is due.```", inline = False)
+    embed.add_field(name = "taskbot tasks", value = "```Returns a list of information regarding all your tasks including the ID of a task, its priority, its name and due date.```", inline = False)
+    embed.add_field(name = "taskbot mark", value = "```This command will mark a provided task ID as completed and remove it from your list of tasks.```", inline = False)
+    embed.add_field(name = "taskbot test", value = "```A testing command which echos a given input.```", inline = False)
+    embed.add_field(name = "taskbot help", value = "```Returns a list of commands and a description of what each command does.```", inline = False)
+    embed.add_field(name = "Other tips", value = "```You can type in 'cancel' while within a command to exit the command.```", inline = False)
+
+    await message.reply(embed = embed)
+
 commands = {
     "test": testCommand,
     "create": createTask,
     "tasks": getTasks,
-    "mark": markTask
+    "mark": markTask,
+    "help": helpCommand
 }
 
 
