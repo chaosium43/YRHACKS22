@@ -6,7 +6,9 @@ import time
 import asyncio
 
 #making the input receiver packet
-client = discord.Client()
+intents = discord.Intents.default()
+intents.message_content = True
+client = discord.Client(intents = intents)
 
 #returns the current day (EST)
 def currentDate():
@@ -247,13 +249,13 @@ async def getTasks(message, user):
         embed = None
         if len(urgent_tasks) > 0:
             embed = discord.Embed(colour = discord.Colour.red())
-            embed.set_author(name = "You have some urgent tasks to do! Finish them as soon as possible!", icon_url = client.user.avatar_url)
+            embed.set_author(name = "You have some urgent tasks to do! Finish them as soon as possible!", icon_url = client.user.avatar.url)
         elif len(medium_tasks) > 0:
             embed = discord.Embed(colour = discord.Colour.orange())
-            embed.set_author(name = "Seems like you have some tasks to do. Consider finishing them today!", icon_url = client.user.avatar_url)
+            embed.set_author(name = "Seems like you have some tasks to do. Consider finishing them today!", icon_url = client.user.avatar.url)
         else:
             embed = discord.Embed(colour = discord.Colour.green())
-            embed.set_author(name = "Here is a list of tasks to do!", icon_url = client.user.avatar_url)
+            embed.set_author(name = "Here is a list of tasks to do!", icon_url = client.user.avatar.url)
 
 
 
@@ -263,7 +265,7 @@ async def getTasks(message, user):
         await message.reply(embed = embed)
     else:
         embed = discord.Embed(colour = discord.Color.blue())
-        embed.set_author(name = "You do not currently have any tasks due currently! Feel free to create additional tasks with 'taskbot create'!", icon_url = client.user.avatar_url)
+        embed.set_author(name = "You do not currently have any tasks due currently! Feel free to create additional tasks with 'taskbot create'!", icon_url = client.user.avatar.url)
         await message.reply(embed = embed)
 
 async def markTask(message, user):
@@ -294,7 +296,7 @@ async def markTask(message, user):
 #Give the user some useful tips on how to use the bot
 async def helpCommand(message, user):
     embed = discord.Embed(colour = discord.Colour.blue())
-    embed.set_author(name = "Here are a list of some commands and what they do!", icon_url = client.user.avatar_url)
+    embed.set_author(name = "Here are a list of some commands and what they do!", icon_url = client.user.avatar.url)
     embed.add_field(name = "taskbot create", value = "```Asks for a task name and asks for when the task is due.```", inline = False)
     embed.add_field(name = "taskbot tasks", value = "```Returns a list of information regarding all your tasks including the ID of a task, its priority, its name and due date.```", inline = False)
     embed.add_field(name = "taskbot mark", value = "```This command will mark a provided task ID as completed and remove it from your list of tasks.```", inline = False)
@@ -421,9 +423,4 @@ async def on_message(message):
                 else: #introduce the bot to the user
                     await message.reply(f"It seems like you are having some trouble figuring out how to use this bot. Consider using '{prefix} help' for a list of commands and how to use them.")
 
-
-            
-            
-
-
-client.run("OTYyMTE0ODc3NzA5NzU0NDE4.YlC1Tg._vUFggMI37NZjUDhRezwD_aJDc4")
+client.run("your token here")
