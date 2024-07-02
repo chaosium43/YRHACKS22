@@ -423,4 +423,4 @@ async def on_message(message):
                 else: #introduce the bot to the user
                     await message.reply(f"It seems like you are having some trouble figuring out how to use this bot. Consider using '{prefix} help' for a list of commands and how to use them.")
 
-client.run("your token here")
+client.run("")
