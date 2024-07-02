@@ -9,5 +9,8 @@ Next, go to the OAuth2 section of the developer portal, give it the bot scope, a
 same permissions as you gave it in the "Bot" section of the developer portal to generate an invite to
 add in your discord server.
 
+Don't forget to give your bot an avatar profile picture as it will break without it. You can use the
+profile picture that my team used for YRHACKS 2022 provided in this folder as "taskbot pfp.png"
+
 Then, there should be a string "your token here" on the last line of "main.py". Change the string to have
 your bot's token and run main.py to start the bot.
